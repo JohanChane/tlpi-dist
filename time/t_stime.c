@@ -38,7 +38,12 @@ main(int argc, char *argv[])
         fatal("strptime failed");
 
     t = mktime(&tm);
-    if (stime(&t) == -1)
+
+    struct timespec ts;
+    ts.tv_sec = t;
+    ts.tv_nsec = 0;
+
+    if (clock_settime(CLOCK_REALTIME, &ts) == -1)
         errExit("stime");
 
     exit(EXIT_SUCCESS);

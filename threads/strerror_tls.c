@@ -20,26 +20,27 @@
    Thread-local storage requires: Linux 2.6 or later, NPTL, and
    gcc 3.3 or later.
 */
-#define _GNU_SOURCE                 /* Get '_sys_nerr' and '_sys_errlist'
-                                       declarations from <stdio.h> */
+#define _GNU_SOURCE
 #include <stdio.h>
-#include <string.h>                 /* Get declaration of strerror() */
-#include <pthread.h>
+#include <string.h>
+#include <errno.h>
 
-#define MAX_ERROR_LEN 256           /* Maximum length of string in per-thread
-                                       buffer returned by strerror() */
+#define MAX_ERROR_LEN 256
 
-static __thread char buf[MAX_ERROR_LEN];
-                                    /* Thread-local return buffer */
+// Define a thread-local buffer for storing error messages
+__thread char buf[MAX_ERROR_LEN];
 
 char *
 strerror(int err)
 {
-    if (err < 0 || err >= _sys_nerr || _sys_errlist[err] == NULL) {
+    int ret;
+
+    // Use the GNU-specific version of strerror_r
+    char *msg = strerror_r(err, buf, MAX_ERROR_LEN);
+    ret = (msg == buf) ? 0 : -1;
+
+    if (ret != 0) {
         snprintf(buf, MAX_ERROR_LEN, "Unknown error %d", err);
-    } else {
-        strncpy(buf, _sys_errlist[err], MAX_ERROR_LEN - 1);
-        buf[MAX_ERROR_LEN - 1] = '\0';          /* Ensure null termination */
     }
 
     return buf;

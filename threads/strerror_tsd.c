@@ -73,11 +73,14 @@ strerror(int err)
             errExitEN(s, "pthread_setspecific");
     }
 
-    if (err < 0 || err >= _sys_nerr || _sys_errlist[err] == NULL) {
+    int ret;
+
+    // Use the GNU-specific version of strerror_r
+    char *msg = strerror_r(err, buf, MAX_ERROR_LEN);
+    ret = (msg == buf) ? 0 : -1;
+
+    if (ret != 0) {
         snprintf(buf, MAX_ERROR_LEN, "Unknown error %d", err);
-    } else {
-        strncpy(buf, _sys_errlist[err], MAX_ERROR_LEN - 1);
-        buf[MAX_ERROR_LEN - 1] = '\0';          /* Ensure null termination */
     }
 
     return buf;
